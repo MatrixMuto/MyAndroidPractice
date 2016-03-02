@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.matrixmuto.myandroidpractice">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -22,6 +23,7 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="com.matrixmuto.myandroidpractice" />
             </intent-filter>
         </activity>
@@ -31,13 +33,24 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="com.matrixmuto.myandroidpractice" />
             </intent-filter>
         </activity>
-        <activity android:name=".DocserverActivity"
+        <activity
+            android:name=".DocserverActivity"
             android:label="@string/title_activity_docserver">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="com.matrixmuto.myandroidpractice" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".TestviewActivity"
+            android:label="@string/title_activity_testview">>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="com.matrixmuto.myandroidpractice" />
             </intent-filter>
         </activity>

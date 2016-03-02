@@ -9,4 +9,5 @@
     <string name="title_activity_tabbed">TabbedActivity</string>
     <string name="section_format">Hello World from section: %1$d</string>
     <string name="title_activity_docserver">Doc Server Check</string>
+    <string name="title_activity_testview">TestviewActivity</string>
 </resources>
