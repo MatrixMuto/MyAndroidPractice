@@ -8,20 +8,83 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
+
+import com.alorma.github.sdk.services.repos.GithubReposClient;
+import com.alorma.github.sdk.services.repos.UserReposClient;
 
 import java.io.IOException;
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import retrofit2.Call;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class ScrollingActivity extends AppCompatActivity {
 
     @Bind(R.id.nest_textview)
     TextView mTextView;
 
+    @Bind(R.id.btn_login)
+    Button mLoginBtn;
+
+    @OnClick(R.id.btn_login)
+    public void onLogin(View view)
+    {
+        String text="";
+//        {
+//            GitHubClient client = ServiceGenerator.createService(GitHubClient.class);
+//
+//            // Fetch and print a list of the contributors to this library.
+//            Call<List<Contributor>> call =
+//                    client.contributors("fs_opensource", "android-boilerplate");
+//            try {
+//                List<Contributor> contributors = call.execute().body();
+//
+//                for (Contributor contributor : contributors) {
+//                    text += contributor.login + " (" + contributor.contributions + ")";
+//                }
+//            } catch (IOException e) {
+//                // handle errors
+//            }
+//        }
+//
+//        {
+//            LoginService loginService =
+//                    ServiceGenerator.createService(LoginService.class, "user", "secretpassword");
+//            try {
+//                Call<User> call = loginService.basicLogin();
+//                User user = call.execute().body();
+//            }
+//            catch (IOException e) {
+//
+//            }
+//
+//        }
+//        {
+//            UserService userService =
+//                    ServiceGenerator.createService(UserService.class, "auth-token");
+//            try {
+//                Call<User> call = userService.me();
+//                User user = call.execute().body();
+//            }
+//            catch (IOException e) {
+//
+//            }
+//        }
+
+//        GithubReposClient client = new UserReposClient(getActivity(), username);
+//        client.observable()
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribeOn(Schedulers.io())
+//                .subscribe();
+
+        return ;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,26 +101,6 @@ public class ScrollingActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
-
-        GitHubClient client = ServiceGenerator.createService(GitHubClient.class);
-
-        String text ="";
-        // Fetch and print a list of the contributors to this library.
-        Call<List<Contributor>> call =
-                client.contributors("fs_opensource", "android-boilerplate");
-        try {
-            List<Contributor> contributors = call.execute().body();
-
-            for (Contributor contributor : contributors) {
-                text += contributor.login + " (" + contributor.contributions + ")";
-            }
-        }
-        catch (IOException e) {
-            // handle errors
-        }
-
-        mTextView.setText(text);
-
     }
 
     @Override
