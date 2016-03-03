@@ -8,13 +8,25 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+
+import java.io.IOException;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
 
 public class ScrollingActivity extends AppCompatActivity {
+
+    @Bind(R.id.nest_textview)
+    TextView mTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scrolling);
+        ButterKnife.bind(this);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -26,6 +38,26 @@ public class ScrollingActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        GitHubClient client = ServiceGenerator.createService(GitHubClient.class);
+
+        String text ="";
+        // Fetch and print a list of the contributors to this library.
+        Call<List<Contributor>> call =
+                client.contributors("fs_opensource", "android-boilerplate");
+        try {
+            List<Contributor> contributors = call.execute().body();
+
+            for (Contributor contributor : contributors) {
+                text += contributor.login + " (" + contributor.contributions + ")";
+            }
+        }
+        catch (IOException e) {
+            // handle errors
+        }
+
+        mTextView.setText(text);
+
     }
 
     @Override
