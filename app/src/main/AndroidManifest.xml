@@ -46,14 +46,18 @@
                 <category android:name="com.matrixmuto.myandroidpractice" />
             </intent-filter>
         </activity>
-        <activity android:name=".TestviewActivity"
-            android:label="@string/title_activity_testview">>
+        <activity
+            android:name=".TestviewActivity"
+            android:label="@string/title_activity_testview">
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="com.matrixmuto.myandroidpractice" />
             </intent-filter>
         </activity>
+        <activity android:name=".GithubActivity" />
+        <activity android:name=".ViewPagerTestActivity"></activity>
     </application>
 
 </manifest>

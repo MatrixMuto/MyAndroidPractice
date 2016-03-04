@@ -5,14 +5,17 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.alorma.github.sdk.bean.dto.response.Repo;
 import com.alorma.github.sdk.services.repos.GithubReposClient;
 import com.alorma.github.sdk.services.repos.UserReposClient;
+import com.alorma.gitskarios.core.Pair;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,11 +24,13 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import retrofit2.Call;
+import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class ScrollingActivity extends AppCompatActivity {
 
+    private static final String TAG = ScrollingActivity.class.getSimpleName();
     @Bind(R.id.nest_textview)
     TextView mTextView;
 
@@ -77,11 +82,32 @@ public class ScrollingActivity extends AppCompatActivity {
 //            }
 //        }
 
-//        GithubReposClient client = new UserReposClient(getActivity(), username);
-//        client.observable()
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribeOn(Schedulers.io())
-//                .subscribe();
+        GithubReposClient client = new UserReposClient("MatrixMuto",null);
+        client.observable()
+                .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .subscribe(new Subscriber<Pair<List<Repo>,Integer>>(){
+
+                @Override
+                public void onCompleted() {
+
+                }
+
+                @Override
+                public void onError(Throwable e) {
+
+                }
+
+                @Override
+                public void onNext(Pair<List<Repo>, Integer> pair) {
+                    List<Repo> list = pair.first;
+                    for(Repo repo : list)
+                    {
+                        Log.d(TAG, repo.full_name);
+                    }
+
+                }
+            });
 
         return ;
     }
