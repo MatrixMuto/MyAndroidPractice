@@ -85,29 +85,27 @@ public class ScrollingActivity extends AppCompatActivity {
         GithubReposClient client = new UserReposClient("MatrixMuto",null);
         client.observable()
                 .observeOn(AndroidSchedulers.mainThread())
-            .subscribeOn(Schedulers.io())
-            .subscribe(new Subscriber<Pair<List<Repo>,Integer>>(){
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Subscriber<Pair<List<Repo>, Integer>>() {
+                    @Override
+                    public void onCompleted() {
 
-                @Override
-                public void onCompleted() {
-
-                }
-
-                @Override
-                public void onError(Throwable e) {
-
-                }
-
-                @Override
-                public void onNext(Pair<List<Repo>, Integer> pair) {
-                    List<Repo> list = pair.first;
-                    for(Repo repo : list)
-                    {
-                        Log.d(TAG, repo.full_name);
                     }
 
-                }
-            });
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Pair<List<Repo>, Integer> pair) {
+                        List<Repo> list = pair.first;
+                        for (Repo repo : list) {
+                            Log.d(TAG, repo.full_name);
+                        }
+
+                    }
+                });
 
         return ;
     }
