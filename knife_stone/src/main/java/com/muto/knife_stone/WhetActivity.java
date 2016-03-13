@@ -10,10 +10,22 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
+
+import java.io.IOException;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class WhetActivity extends AppCompatActivity {
 
@@ -22,6 +34,8 @@ public class WhetActivity extends AppCompatActivity {
 
     @Bind(R.id.container)
     ViewPager mViewPager;
+
+
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
@@ -53,7 +67,51 @@ public class WhetActivity extends AppCompatActivity {
          * fragment.
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
+        @Bind(R.id.button)
+        Button btnOne;
 
+        @Bind(R.id.button2)
+        Button btnTwo;
+
+        @Bind(R.id.button3)
+        Button btnThree;
+
+        @Bind(R.id.textView)
+        TextView textView;
+
+        @OnClick(R.id.button4)
+        public void onBtnFourClick(View view)
+        {
+            OkHttpClient client = new OkHttpClient();
+
+            Request.Builder builder = new Request.Builder();
+//            Request request = builder.url("https://api.github.com/users/octocat/orgs").build();
+
+            RequestBody body = RequestBody.create(JSON,"{\n" +
+                    "  \"scopes\": [\n" +
+                    "    \"public_repo\"\n" +
+                    "  ],\n" +
+                    "  \"note\": \"admin script\"\n" +
+                    "}");
+            Request request = builder.url("https://api.github.com").post("POST").build();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    final String body = response.body().string();
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textView.setText(body);
+                        }
+                    });
+                }
+            });
+        }
         public PlaceholderFragment() {
         }
 
@@ -73,6 +131,8 @@ public class WhetActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_tabbed, container, false);
+            ButterKnife.bind(this,rootView);
+
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
             return rootView;
