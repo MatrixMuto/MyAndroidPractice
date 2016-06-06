@@ -1,1 +1,1 @@
-include ':app', ':knife_stone'
+include ':app', ':knife_stone', ':foobroadcaster'
