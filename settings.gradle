@@ -1,1 +1,1 @@
-include ':app', ':knife_stone', ':foobroadcaster', ':mediaprojectiontest', ':library', ':akg'
+include ':app', ':knife_stone', ':foobroadcaster', ':mediaprojectiontest', ':library', ':akg', ':fluxtest', ':fooone', ':myvideoplayer'

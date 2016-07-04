@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="com.muto.knife_stone.WhetActivity">
+    tools:context=".presentation.view.activity.WhetActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
