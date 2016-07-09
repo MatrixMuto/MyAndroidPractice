@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 
@@ -19,11 +21,13 @@ import java.io.IOException;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class MangoActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, SurfaceTexture.OnFrameAvailableListener {
+public class MangoActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener,
+        SurfaceTexture.OnFrameAvailableListener, SurfaceHolder.Callback {
 
     int scrennWidth,screenHeight;
     SurfaceTexture surfaceTexture;
     Camera camera;
+    private SurfaceView surfaceView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +35,10 @@ public class MangoActivity extends AppCompatActivity implements TextureView.Surf
 
         setContentView(R.layout.activity_mango);
 
-        TextureView textureView = (TextureView) findViewById(R.id.textureView);
-        textureView.setSurfaceTextureListener(this);
+//        TextureView textureView = (TextureView) findViewById(R.id.textureView);
+//        textureView.setSurfaceTextureListener(this);
+        surfaceView = (SurfaceView) findViewById(R.id.surfaceview);
+        surfaceView.getHolder().addCallback(this);
     }
 
 
@@ -77,5 +83,20 @@ public class MangoActivity extends AppCompatActivity implements TextureView.Surf
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
         Log.d("test","" + surfaceTexture.getTimestamp());
         surfaceTexture.updateTexImage();
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+
     }
 }

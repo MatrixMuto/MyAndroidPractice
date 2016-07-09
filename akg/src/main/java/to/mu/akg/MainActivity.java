@@ -31,9 +31,6 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        startButton = (Button) findViewById(R.id.btn_start);
-        startButton.setOnClickListener(this);
-
 //        List<String> strings = new ArrayList<>();
 //        strings.add("test1");
 //        SimpleAdapter simpleAdapter = new SimpleAdapter(strings,);
@@ -59,31 +56,34 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-        if (v == startButton) {
-            Intent intent = new Intent(this,MangoActivity.class)
-                    .setData(Uri.parse("rtmp://172.17.196.3:1935/live/test"));
-            startActivity(intent);
+        switch (v.getId()) {
+            case R.id.btn_start:
+                Intent intent = new Intent(this, MangoActivity.class)
+                        .setData(Uri.parse("rtmp://172.17.196.3:1935/live/test"));
+                startActivity(intent);
+                break;
+
+            default:
+                break;
         }
     }
 
     @TargetApi(21)
-    private void listCodec() throws IOException
-    {
+    private void listCodec() throws IOException {
         String test = "";
-        MediaCodecList list =  new MediaCodecList(MediaCodecList.ALL_CODECS);
+        MediaCodecList list = new MediaCodecList(MediaCodecList.ALL_CODECS);
         MediaCodecInfo[] infos = list.getCodecInfos();
-        for (MediaCodecInfo info : infos)
-        {
+        for (MediaCodecInfo info : infos) {
             test += info.getName() + "\n";
         }
         MediaFormat format = new MediaFormat();
 //        format.setLong(MediaFormat.KEY_BITRATE_MODE, );
         String encoder = list.findEncoderForFormat(format);
-        MediaCodec codec = MediaCodec.createByCodecName(encoder);
-//        codec.configure();
-        codec.start();
-
-        codec.stop();
+//        MediaCodec codec = MediaCodec.createByCodecName(encoder);
+////        codec.configure();
+//        codec.start();
+//
+//        codec.stop();
 //        codec.setVideoScalingMode();
         Log.d("test", test);
     }

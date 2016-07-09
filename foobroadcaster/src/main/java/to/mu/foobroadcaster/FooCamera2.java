@@ -167,7 +167,7 @@ public class FooCamera2 {
         try {
 
             mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget();
+//            mPreviewRequestBuilder.addTarget();
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
