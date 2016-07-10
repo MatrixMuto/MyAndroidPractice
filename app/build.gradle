@@ -9,8 +9,8 @@ model {
             applicationId "com.matrixmuto.myandroidpractice"
             minSdkVersion.apiLevel 19
             targetSdkVersion.apiLevel 23
-//            versionCode 1
-//            versionName "1.0"
+            versionCode 1
+            versionName "1.0"
         }
         buildTypes {
             release {

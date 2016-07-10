@@ -1,93 +1,60 @@
 package to.mu.akg;
 
-import android.annotation.SuppressLint;
-import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
-import android.media.MediaCodec;
-import android.support.v7.app.ActionBar;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.TextureView;
-import android.view.View;
-
-import java.io.IOException;
 
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
+ *
  */
-public class MangoActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener,
-        SurfaceTexture.OnFrameAvailableListener, SurfaceHolder.Callback {
+public class MangoActivity extends AppCompatActivity implements SurfaceHolder.Callback {
 
-    int scrennWidth,screenHeight;
-    SurfaceTexture surfaceTexture;
-    Camera camera;
-    private SurfaceView surfaceView;
+    private MangoHandler mangoHandler;
+    private CherryThread cherryThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_mango);
 
-//        TextureView textureView = (TextureView) findViewById(R.id.textureView);
-//        textureView.setSurfaceTextureListener(this);
-        surfaceView = (SurfaceView) findViewById(R.id.surfaceview);
-        surfaceView.getHolder().addCallback(this);
+        mangoHandler = new MangoHandler(this);
+
+        SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceview);
+        if (surfaceView != null)
+            surfaceView.getHolder().addCallback(this);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        cherryThread = new CherryThread(mangoHandler);
+        cherryThread.start();
+        cherryThread.waitUntilReady();
+    }
 
     @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        scrennWidth = width;
-        screenHeight = height;
-        this.surfaceTexture = surface;
+    protected void onPause() {
+        super.onPause();
 
-        camera = Camera.open();
+        CherryHandler cherryHandler = cherryThread.getHandler();
+        cherryHandler.sendShutdown();
         try {
-            camera.setPreviewTexture(surface);
-        } catch (IOException e) {
-            e.printStackTrace();
+            cherryThread.join();
+        } catch (InterruptedException ie) {
+            // not expected
+            throw new RuntimeException("join was interrupted", ie);
         }
-        camera.startPreview();
-
-        try {
-            MediaCodec.createEncoderByType("video/avc");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
-    }
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        camera.release();
-        return true;
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
-    }
-
-    @Override
-    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        Log.d("test","" + surfaceTexture.getTimestamp());
-        surfaceTexture.updateTexImage();
+        cherryThread = null;
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-
+        CherryHandler handler = cherryThread.getHandler();
+        handler.sendSurfaceAvailable(holder, true);
     }
 
     @Override
@@ -98,5 +65,15 @@ public class MangoActivity extends AppCompatActivity implements TextureView.Surf
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
 
+    }
+
+    private static class MangoHandler extends Handler {
+
+        public MangoHandler(MangoActivity activity) {
+        }
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
     }
 }
