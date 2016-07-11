@@ -32,6 +32,14 @@ public class CherryHandler extends Handler {
                 newSurface ? 1 : 0, 0, holder));
     }
 
+    public void sendSurfaceChanged(int format, int width, int height) {
+
+    }
+
+    public void sendSurfaceDestroyed() {
+
+    }
+
     public void sendShutdown() {
         sendMessage(obtainMessage(MSG_SHUTDOWN));
     }
@@ -47,7 +55,7 @@ public class CherryHandler extends Handler {
         }
         switch (what) {
             case MSG_SURFACE_AVAILABLE:
-//                cherryThread.
+                cherryThread.surfaceAvaliable((SurfaceHolder)msg.obj);
                 break;
             case MSG_SHUTDOWN:
                 cherryThread.shutdown();
@@ -56,4 +64,6 @@ public class CherryHandler extends Handler {
                 throw new RuntimeException("unknown message " + what);
         }
     }
+
+
 }
