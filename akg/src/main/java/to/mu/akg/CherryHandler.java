@@ -15,6 +15,7 @@ public class CherryHandler extends Handler {
     private static final String TAG = "CherryHandler";
     private static final int MSG_SURFACE_AVAILABLE = 0;
     private static final int MSG_SHUTDOWN = 10;
+    private static final int MSG_FRAME_AVAILABLE = 1;
 
     private final WeakReference<CherryThread> weakCherryThread;
 
@@ -40,6 +41,15 @@ public class CherryHandler extends Handler {
 
     }
 
+    /**
+     * Sends the "frame available" message.
+     * <p/>
+     * Call from UI thread.
+     */
+    public void sendFrameAvailable() {
+        sendMessage(obtainMessage(MSG_FRAME_AVAILABLE));
+    }
+
     public void sendShutdown() {
         sendMessage(obtainMessage(MSG_SHUTDOWN));
     }
@@ -59,6 +69,9 @@ public class CherryHandler extends Handler {
                 break;
             case MSG_SHUTDOWN:
                 cherryThread.shutdown();
+                break;
+            case MSG_FRAME_AVAILABLE:
+                cherryThread.frameAvailable();
                 break;
             default:
                 throw new RuntimeException("unknown message " + what);

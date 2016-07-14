@@ -47,11 +47,11 @@ public class MainActivity extends AppCompatActivity
 //        MediaCodecIn
 //        MedaCodec
 
-        try {
-            listCodec();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            listCodec();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override

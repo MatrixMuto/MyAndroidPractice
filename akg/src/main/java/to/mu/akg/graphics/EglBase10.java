@@ -164,7 +164,7 @@ final class EglBase10 extends EglBase {
   }
 
   @Override
-  public org.webrtc.EglBase.Context getEglBaseContext() {
+  public EglBase.Context getEglBaseContext() {
     return new Context(eglContext);
   }
 

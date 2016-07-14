@@ -1,6 +1,11 @@
 package to.mu.akg;
 
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.opengl.EGL14;
+import android.opengl.EGLSurface;
+import android.opengl.GLES20;
+import android.opengl.Matrix;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -8,10 +13,18 @@ import android.view.SurfaceHolder;
 
 import java.io.IOException;
 
+import to.mu.akg.graphics.Drawable2d;
+import to.mu.akg.graphics.EglBase;
+import to.mu.akg.graphics.EglBase14;
+import to.mu.akg.graphics.GlUtil;
+import to.mu.akg.graphics.ScaledDrawable2d;
+import to.mu.akg.graphics.Sprite2d;
+import to.mu.akg.graphics.Texture2dProgram;
+
 /**
  * Created by muto on 16-7-8.
  */
-public class CherryThread extends Thread {
+public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "CherryThread";
     private static final int REQ_CAMERA_HEIGHT = 1280;
     private static final int REQ_CAMERA_WIDTH = 720;
@@ -22,6 +35,15 @@ public class CherryThread extends Thread {
     private final Object startLock = new Object();
     private boolean ready = false;
     private Camera camera;
+    private EGLSurface windowSurface;
+    private Texture2dProgram mTexProgram;
+    private SurfaceTexture mCameraTexture;
+    private final ScaledDrawable2d mRectDrawable =
+            new ScaledDrawable2d(Drawable2d.Prefab.RECTANGLE);
+    private final Sprite2d mRect = new Sprite2d(mRectDrawable);
+    private float[] mDisplayProjectionMatrix = new float[16];
+    private float mPosX;
+    private float mPosY;
 
     public CherryThread(Handler mangoHandler) {
         super(TAG);
@@ -80,15 +102,82 @@ public class CherryThread extends Thread {
         return cherryHandler;
     }
 
+    EglBase eglBase14;
+
+    /**
+     * 在SurfaceView的SurfaceCreate回调中,把Surface传到这个线程环境中.
+     *
+     * @param holder
+     */
     public void surfaceAvaliable(SurfaceHolder holder) {
         holder.getSurface();
+        eglBase14 = EglBase.create(null, EglBase.CONFIG_RECORDABLE);
+        eglBase14.createSurface(holder.getSurface());
+        eglBase14.makeCurrent();
+
+
+        mTexProgram = new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT);
+        int textureId = mTexProgram.createTextureObject();
+        mCameraTexture = new SurfaceTexture(textureId);
+        mRect.setTexture(textureId);
+        mCameraTexture.setOnFrameAvailableListener(this);
+
+        int width = eglBase14.surfaceWidth();
+        int height = eglBase14.surfaceHeight();
+//        Log.d(TAG, "finishSurfaceSetup size=" + width + "x" + height +
+//                " camera=" + mCameraPreviewWidth + "x" + mCameraPreviewHeight);
+
+        // Use full window.
+        GLES20.glViewport(0, 0, width, height);
+
+        // Simple orthographic projection, with (0,0) in lower-left corner.
+        Matrix.orthoM(mDisplayProjectionMatrix, 0, 0, width, 0, height, -1, 1);
+
+        // Default position is center of screen.
+        mPosX = width / 2.0f;
+        mPosY = height / 2.0f;
+//
+        updateGeometry();
+
         try {
-            camera.setPreviewDisplay(holder);
+            camera.setPreviewTexture(mCameraTexture);
         } catch (IOException e) {
             e.printStackTrace();
         }
         camera.startPreview();
     }
+
+    /**
+     * Updates the geometry of mRect, based on the size of the window and the current
+     * values set by the UI.
+     */
+    private void updateGeometry() {
+        int width = eglBase14.surfaceWidth();
+        ;
+        int height = eglBase14.surfaceHeight();
+        ;
+
+        int smallDim = Math.min(width, height);
+        // Max scale is a bit larger than the screen, so we can show over-size.
+        float scaled = smallDim * (100.0f / 100.0f) * 1.25f;
+        float cameraAspect = (float) width / height;
+        int newWidth = Math.round(scaled * cameraAspect);
+        int newHeight = Math.round(scaled);
+
+        float zoomFactor = 1.0f - (1.0f / 100.0f);
+        int rotAngle = Math.round(360 * (1.0f / 100.0f));
+
+        mRect.setScale(newWidth, newHeight);
+        mRect.setPosition(mPosX, mPosY);
+        mRect.setRotation(rotAngle);
+        mRectDrawable.setScale(zoomFactor);
+
+//        mMainHandler.sendRectSize(newWidth, newHeight);
+//        mMainHandler.sendZoomArea(Math.round(mCameraPreviewWidth * zoomFactor),
+//                Math.round(mCameraPreviewHeight * zoomFactor));
+//        mMainHandler.sendRotateDeg(rotAngle);
+    }
+
 
     private void openCamera(int width, int heigth, int fps) {
         camera = Camera.open(1);
@@ -97,15 +186,15 @@ public class CherryThread extends Thread {
         camera.release();
     }
 
-    @Override   // SurfaceTexture.OnFrameAvailableListener; runs on arbitrary thread
-    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        mHandler.sendFrameAvailable();
-    }
+//    @Override   // SurfaceTexture.OnFrameAvailableListener; runs on arbitrary thread
+//    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+//        mHandler.sendFrameAvailable();
+//    }
 
     /**
      * Handles incoming frame of data from the camera.
      */
-    private void frameAvailable() {
+    protected void frameAvailable() {
         mCameraTexture.updateTexImage();
         draw();
     }
@@ -119,8 +208,13 @@ public class CherryThread extends Thread {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         mRect.draw(mTexProgram, mDisplayProjectionMatrix);
-        mWindowSurface.swapBuffers();
+        eglBase14.swapBuffers();
 
         GlUtil.checkGlError("draw done");
+    }
+
+    @Override
+    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        cherryHandler.sendFrameAvailable();
     }
 }
