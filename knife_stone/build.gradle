@@ -31,6 +31,5 @@ dependencies {
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.github.alorma:github-sdk:3.2.2'
     compile 'io.reactivex:rxandroid:1.1.0'
-
     compile 'in.srain.cube:ultra-ptr:1.0.11'
 }
