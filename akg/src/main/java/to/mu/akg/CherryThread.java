@@ -11,11 +11,13 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import java.io.File;
 import java.io.IOException;
 
+import to.mu.akg.graphics.CircularEncoder;
 import to.mu.akg.graphics.Drawable2d;
 import to.mu.akg.graphics.EglBase;
-import to.mu.akg.graphics.EglBase14;
+import to.mu.akg.graphics.FullFrameRect;
 import to.mu.akg.graphics.GlUtil;
 import to.mu.akg.graphics.ScaledDrawable2d;
 import to.mu.akg.graphics.Sprite2d;
@@ -29,6 +31,9 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
     private static final int REQ_CAMERA_HEIGHT = 1280;
     private static final int REQ_CAMERA_WIDTH = 720;
     private static final int REQ_CAMERA_FPS = 30;
+
+    private static final int VIDEO_WIDTH = 640;
+    private static final int VIDEO_HEIGHT = 480;
 
     private volatile CherryHandler cherryHandler;
     // Used to wait for the thread to start.
@@ -44,6 +49,11 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
     private float[] mDisplayProjectionMatrix = new float[16];
     private float mPosX;
     private float mPosY;
+    private CircularEncoder mCircEncoder;
+    private EglBase eglBaseEncoder;
+    private int mTextureId;
+    EglBase eglBase14;
+    private FullFrameRect mFullFrameBlit;
 
     public CherryThread(Handler mangoHandler) {
         super(TAG);
@@ -102,7 +112,12 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
         return cherryHandler;
     }
 
-    EglBase eglBase14;
+    public void saveFile(File outputFile) {
+        if (mCircEncoder != null) {
+            mCircEncoder.saveVideo(outputFile);
+        }
+    }
+
 
     /**
      * 在SurfaceView的SurfaceCreate回调中,把Surface传到这个线程环境中.
@@ -115,11 +130,14 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
         eglBase14.createSurface(holder.getSurface());
         eglBase14.makeCurrent();
 
+//        mFullFrameBlit = new FullFrameRect(
+//                new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
 
         mTexProgram = new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT);
-        int textureId = mTexProgram.createTextureObject();
-        mCameraTexture = new SurfaceTexture(textureId);
-        mRect.setTexture(textureId);
+        mFullFrameBlit = new FullFrameRect(mTexProgram);
+        mTextureId = mTexProgram.createTextureObject();
+        mCameraTexture = new SurfaceTexture(mTextureId);
+        mRect.setTexture(mTextureId);
         mCameraTexture.setOnFrameAvailableListener(this);
 
         int width = eglBase14.surfaceWidth();
@@ -145,6 +163,30 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
             e.printStackTrace();
         }
         camera.startPreview();
+
+
+        try {
+            mCircEncoder = new CircularEncoder(VIDEO_WIDTH, VIDEO_HEIGHT, 6000000,
+                    30, 7, new CircularEncoder.Callback() {
+                @Override
+                public void fileSaveComplete(int status) {
+
+                }
+
+                @Override
+                public void bufferStatus(long totalTimeMsec) {
+
+                }
+            });
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+
+        eglBaseEncoder = EglBase.create(eglBase14.getEglBaseContext(), EglBase.CONFIG_RECORDABLE);
+        eglBaseEncoder.createSurface(mCircEncoder.getInputSurface());
+//        eglBaseEncoder.makeCurrent();
+
+
     }
 
     /**
@@ -153,9 +195,7 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
      */
     private void updateGeometry() {
         int width = eglBase14.surfaceWidth();
-        ;
         int height = eglBase14.surfaceHeight();
-        ;
 
         int smallDim = Math.min(width, height);
         // Max scale is a bit larger than the screen, so we can show over-size.
@@ -186,15 +226,15 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
         camera.release();
     }
 
-//    @Override   // SurfaceTexture.OnFrameAvailableListener; runs on arbitrary thread
-//    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-//        mHandler.sendFrameAvailable();
-//    }
-
+    @Override
+    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        cherryHandler.sendFrameAvailable();
+    }
     /**
      * Handles incoming frame of data from the camera.
      */
     protected void frameAvailable() {
+        eglBase14.makeCurrent();
         mCameraTexture.updateTexImage();
         draw();
     }
@@ -203,6 +243,7 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
      * Draws the scene and submits the buffer.
      */
     private void draw() {
+        eglBase14.makeCurrent();
         GlUtil.checkGlError("draw start");
 
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -210,11 +251,18 @@ public class CherryThread extends Thread implements SurfaceTexture.OnFrameAvaila
         mRect.draw(mTexProgram, mDisplayProjectionMatrix);
         eglBase14.swapBuffers();
 
+
+//        if (!mFileSaveInProgress) {
+        eglBaseEncoder.makeCurrent();
+        GLES20.glViewport(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
+        mRect.draw(mTexProgram, mDisplayProjectionMatrix);
+//        mRect.dr(mTextureId, mDisplayProjectionMatrix);
+        mCircEncoder.frameAvailableSoon();
+//            eglBaseEncoder.setPresentationTime(mCameraTexture.getTimestamp());
+        eglBaseEncoder.swapBuffers();
+//        }
         GlUtil.checkGlError("draw done");
     }
 
-    @Override
-    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        cherryHandler.sendFrameAvailable();
-    }
+
 }

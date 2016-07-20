@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+
+import java.io.File;
 
 /**
  *
@@ -15,6 +18,7 @@ public class MangoActivity extends AppCompatActivity implements SurfaceHolder.Ca
     private static final String TAG = "MangoActivity";
     private MangoHandler mangoHandler;
     private CherryThread cherryThread;
+    private File mOutputFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +30,8 @@ public class MangoActivity extends AppCompatActivity implements SurfaceHolder.Ca
         SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceview);
         if (surfaceView != null)
             surfaceView.getHolder().addCallback(this);
+
+        mOutputFile = new File(getExternalCacheDir() + "/continuous-capture.mp4");
     }
 
     @Override
@@ -50,6 +56,12 @@ public class MangoActivity extends AppCompatActivity implements SurfaceHolder.Ca
             throw new RuntimeException("join was interrupted", ie);
         }
         cherryThread = null;
+    }
+
+    public void onSaveFile(View view) {
+        if (cherryThread != null) {
+            cherryThread.saveFile(mOutputFile);
+        }
     }
 
     @Override
@@ -89,8 +101,6 @@ public class MangoActivity extends AppCompatActivity implements SurfaceHolder.Ca
 
         public MangoHandler(MangoActivity activity) {
         }
-
-
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
