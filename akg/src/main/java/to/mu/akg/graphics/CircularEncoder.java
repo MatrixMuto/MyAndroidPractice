@@ -26,6 +26,8 @@ import android.os.Message;
 import android.util.Log;
 import android.view.Surface;
 
+import com.github.faucamp.simplertmp.DefaultRtmpPublisher;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -54,6 +56,7 @@ public class CircularEncoder {
 
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
     private static final int IFRAME_INTERVAL = 1;           // sync frame every second
+    private final DefaultRtmpPublisher mRtmpPublisher;
 
     private EncoderThread mEncoderThread;
     private Surface mInputSurface;
@@ -129,6 +132,10 @@ public class CircularEncoder {
         mEncoderThread = new EncoderThread(mEncoder, encBuffer, cb);
         mEncoderThread.start();
         mEncoderThread.waitUntilReady();
+
+        mRtmpPublisher = new DefaultRtmpPublisher("rtmp://172.17.196.3:1935/live?android");
+        mRtmpPublisher.connect();
+        mRtmpPublisher.publish();
     }
 
     /**
