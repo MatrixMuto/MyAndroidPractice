@@ -1,0 +1,3 @@
+[submodule "SimpleRtmp"]
+	path = SimpleRtmp
+	url = https://github.com/MatrixMuto/SimpleRtmp.git

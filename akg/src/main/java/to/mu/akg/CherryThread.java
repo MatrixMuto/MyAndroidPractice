@@ -11,6 +11,8 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import com.github.faucamp.simplertmp.DefaultRtmpClient;
+
 import java.io.File;
 import java.io.IOException;
 
