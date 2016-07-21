@@ -56,7 +56,6 @@ public class CircularEncoder {
 
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
     private static final int IFRAME_INTERVAL = 1;           // sync frame every second
-    private final DefaultRtmpPublisher mRtmpPublisher;
 
     private EncoderThread mEncoderThread;
     private Surface mInputSurface;
@@ -133,9 +132,8 @@ public class CircularEncoder {
         mEncoderThread.start();
         mEncoderThread.waitUntilReady();
 
-        mRtmpPublisher = new DefaultRtmpPublisher("rtmp://172.17.196.3:1935/live?android");
-        mRtmpPublisher.connect();
-        mRtmpPublisher.publish();
+//        mRtmpPublisher = new DefaultRtmpPublisher("rtmp://172.17.196.3:1935/live?android");
+
     }
 
     /**
@@ -231,6 +229,9 @@ public class CircularEncoder {
         private final Object mLock = new Object();
         private volatile boolean mReady = false;
 
+        private final DefaultRtmpPublisher mRtmpPublisher;
+
+
         public EncoderThread(MediaCodec mediaCodec, CircularEncoderBuffer encBuffer,
                              CircularEncoder.Callback callback) {
             mEncoder = mediaCodec;
@@ -238,6 +239,14 @@ public class CircularEncoder {
             mCallback = callback;
 
             mBufferInfo = new MediaCodec.BufferInfo();
+
+            mRtmpPublisher = new DefaultRtmpPublisher("rtmp://192.168.55.104:1935/live?android");
+            try {
+                mRtmpPublisher.connect();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mRtmpPublisher.publish();
         }
 
         /**
@@ -340,9 +349,12 @@ public class CircularEncoder {
                         encodedData.position(mBufferInfo.offset);
                         encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
 
-                        mEncBuffer.add(encodedData, mBufferInfo.flags,
-                                mBufferInfo.presentationTimeUs);
-
+//                        mEncBuffer.add(encodedData, mBufferInfo.flags,
+//                                mBufferInfo.presentationTimeUs);
+                        int size = encodedData.limit()-encodedData.position();
+                        byte[] data2 = new byte[size];
+                        encodedData.get(data2);
+                        mRtmpPublisher.send(data2, (int)mBufferInfo.presentationTimeUs,1);
                         if (VERBOSE) {
                             Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
                                     mBufferInfo.presentationTimeUs);
