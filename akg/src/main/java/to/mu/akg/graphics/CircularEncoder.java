@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 
+import to.mu.akg.SrsFlvMuxer;
+
 /**
  * Encodes video in a fixed-size circular buffer.
  * <p>
@@ -209,7 +211,7 @@ public class CircularEncoder {
      * input surface.  We will see data appear at the decoder output, so we can either use
      * an infinite timeout on dequeueOutputBuffer() or wait() on an object and require the
      * calling app wake us.  It's very useful to have all of the buffer management local to
-     * this thread -- avoids synchronization -- so we want to do the file muxing in here.
+     * this  thread -- avoids synchronization -- so we want to do the file muxing in here.
      * So, it's best to sleep on an object and do something appropriate when awakened.
      * <p>
      * This class does not manage the MediaCodec encoder startup/shutdown.  The encoder
@@ -217,6 +219,7 @@ public class CircularEncoder {
      * thread has been joined.
      */
     private static class EncoderThread extends Thread {
+        private final SrsFlvMuxer flvMuxer;
         private MediaCodec mEncoder;
         private MediaFormat mEncodedFormat;
         private MediaCodec.BufferInfo mBufferInfo;
@@ -230,6 +233,7 @@ public class CircularEncoder {
         private volatile boolean mReady = false;
 
         private final DefaultRtmpPublisher mRtmpPublisher;
+        private long globalTs = -1;
 
 
         public EncoderThread(MediaCodec mediaCodec, CircularEncoderBuffer encBuffer,
@@ -240,13 +244,21 @@ public class CircularEncoder {
 
             mBufferInfo = new MediaCodec.BufferInfo();
 
-            mRtmpPublisher = new DefaultRtmpPublisher("rtmp://192.168.55.104:1935/live?android");
+//            mRtmpPublisher = new DefaultRtmpPublisher("rtmp://192.168.55.104:1935/live?android");
+            mRtmpPublisher = new DefaultRtmpPublisher("rtmp://172.17.196.3:1935/live?android");
             try {
                 mRtmpPublisher.connect();
+                mRtmpPublisher.publish();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            mRtmpPublisher.publish();
+
+            flvMuxer = new SrsFlvMuxer(mRtmpPublisher);
+            try {
+                flvMuxer.start("");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         /**
@@ -335,13 +347,22 @@ public class CircularEncoder {
                                 " was null");
                     }
 
+                    flvMuxer.writeSampleData(100, encodedData.duplicate(), mBufferInfo);
+
                     if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
                         // The codec config data was pulled out when we got the
                         // INFO_OUTPUT_FORMAT_CHANGED status.  The MediaMuxer won't accept
                         // a single big blob -- it wants separate csd-0/csd-1 chunks --
                         // so simply saving this off won't work.
-                        if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
+//                        if (VERBOSE)
+                        Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
                         mBufferInfo.size = 0;
+                        int size = encodedData.limit() - encodedData.position();
+                        byte[] data2 = new byte[size + 1];
+                        data2[0] = 1 << 4 | 0x7;
+                        encodedData.get(data2, 1, size);
+
+                        //mRtmpPublisher.send(data2, (int)mBufferInfo.presentationTimeUs, 1);
                     }
 
                     if (mBufferInfo.size != 0) {
@@ -352,9 +373,18 @@ public class CircularEncoder {
 //                        mEncBuffer.add(encodedData, mBufferInfo.flags,
 //                                mBufferInfo.presentationTimeUs);
                         int size = encodedData.limit()-encodedData.position();
-                        byte[] data2 = new byte[size];
-                        encodedData.get(data2);
-                        mRtmpPublisher.send(data2, (int)mBufferInfo.presentationTimeUs,1);
+                        byte[] data2 = new byte[size + 1];
+                        if (1 == (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME)) {
+                            data2[0] = 1 << 4 | 0x7;
+                        } else {
+                            data2[0] = 2 << 4 | 0x7;
+                        }
+                        encodedData.get(data2, 1, size);
+                        if (globalTs == -1) {
+                            globalTs = mBufferInfo.presentationTimeUs;
+                        }
+
+                        //mRtmpPublisher.send(data2, (int)(mBufferInfo.presentationTimeUs - globalTs), 1);
                         if (VERBOSE) {
                             Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
                                     mBufferInfo.presentationTimeUs);
